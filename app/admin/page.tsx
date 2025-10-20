@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaBlog, FaVideo, FaShoppingCart, FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import { FaBlog, FaVideo, FaShoppingCart, FaPlus, FaEdit, FaTrash, FaEye, FaUser, FaSave } from 'react-icons/fa';
 import Link from 'next/link';
+import { getAboutContent, updateAboutContent, AboutContent } from '@/data/about';
 
 // Mock data - in real implementation, this would come from your backend/API
 const mockBlogPosts = [
@@ -25,13 +26,19 @@ const mockShopItems = [
 ];
 
 export default function AdminPanel() {
-  const [activeTab, setActiveTab] = useState<'blog' | 'portfolio' | 'shop'>('blog');
+  const [activeTab, setActiveTab] = useState<'blog' | 'portfolio' | 'shop' | 'about'>('blog');
+  const [aboutData, setAboutData] = useState<AboutContent>(getAboutContent());
 
   const tabs = [
     { id: 'blog' as const, label: 'Blog Posts', icon: FaBlog, count: mockBlogPosts.length },
     { id: 'portfolio' as const, label: 'Portfolio', icon: FaVideo, count: mockPortfolioItems.length },
     { id: 'shop' as const, label: 'Shop Items', icon: FaShoppingCart, count: mockShopItems.length },
+    { id: 'about' as const, label: 'About Page', icon: FaUser, count: 1 },
   ];
+
+  useEffect(() => {
+    setAboutData(getAboutContent());
+  }, []);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -225,6 +232,138 @@ export default function AdminPanel() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'about':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-text-primary">About Page Content</h2>
+              <motion.button
+                onClick={() => {
+                  updateAboutContent(aboutData);
+                  alert('About content saved successfully!');
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/50 rounded-lg text-primary hover:bg-primary/20 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <FaSave />
+                Save Changes
+              </motion.button>
+            </div>
+
+            <div className="bg-dark-lighter/50 backdrop-blur-md border border-text-primary/10 rounded-lg p-6 space-y-6">
+              {/* Basic Info */}
+              <div>
+                <h3 className="text-lg font-semibold text-text-primary mb-4">Basic Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-2">Title</label>
+                    <input
+                      type="text"
+                      value={aboutData.title}
+                      onChange={(e) => setAboutData({...aboutData, title: e.target.value})}
+                      className="w-full px-3 py-2 bg-dark-lighter/50 border border-text-primary/20 rounded-lg text-text-primary focus:border-primary/50 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-2">Subtitle</label>
+                    <input
+                      type="text"
+                      value={aboutData.subtitle}
+                      onChange={(e) => setAboutData({...aboutData, subtitle: e.target.value})}
+                      className="w-full px-3 py-2 bg-dark-lighter/50 border border-text-primary/20 rounded-lg text-text-primary focus:border-primary/50 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Info */}
+              <div>
+                <h3 className="text-lg font-semibold text-text-primary mb-4">Profile Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-2">Name</label>
+                    <input
+                      type="text"
+                      value={aboutData.profileName}
+                      onChange={(e) => setAboutData({...aboutData, profileName: e.target.value})}
+                      className="w-full px-3 py-2 bg-dark-lighter/50 border border-text-primary/20 rounded-lg text-text-primary focus:border-primary/50 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-2">Title</label>
+                    <input
+                      type="text"
+                      value={aboutData.profileTitle}
+                      onChange={(e) => setAboutData({...aboutData, profileTitle: e.target.value})}
+                      className="w-full px-3 py-2 bg-dark-lighter/50 border border-text-primary/20 rounded-lg text-text-primary focus:border-primary/50 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-2">Handle</label>
+                    <input
+                      type="text"
+                      value={aboutData.profileHandle}
+                      onChange={(e) => setAboutData({...aboutData, profileHandle: e.target.value})}
+                      className="w-full px-3 py-2 bg-dark-lighter/50 border border-text-primary/20 rounded-lg text-text-primary focus:border-primary/50 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-2">Status</label>
+                    <input
+                      type="text"
+                      value={aboutData.profileStatus}
+                      onChange={(e) => setAboutData({...aboutData, profileStatus: e.target.value})}
+                      className="w-full px-3 py-2 bg-dark-lighter/50 border border-text-primary/20 rounded-lg text-text-primary focus:border-primary/50 focus:outline-none"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-text-primary mb-2">Avatar URL</label>
+                    <input
+                      type="text"
+                      value={aboutData.profileAvatarUrl}
+                      onChange={(e) => setAboutData({...aboutData, profileAvatarUrl: e.target.value})}
+                      className="w-full px-3 py-2 bg-dark-lighter/50 border border-text-primary/20 rounded-lg text-text-primary focus:border-primary/50 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Descriptions */}
+              <div>
+                <h3 className="text-lg font-semibold text-text-primary mb-4">Content Descriptions</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-2">Main Description</label>
+                    <textarea
+                      value={aboutData.description}
+                      onChange={(e) => setAboutData({...aboutData, description: e.target.value})}
+                      rows={3}
+                      className="w-full px-3 py-2 bg-dark-lighter/50 border border-text-primary/20 rounded-lg text-text-primary focus:border-primary/50 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-2">Second Description</label>
+                    <textarea
+                      value={aboutData.description2}
+                      onChange={(e) => setAboutData({...aboutData, description2: e.target.value})}
+                      rows={3}
+                      className="w-full px-3 py-2 bg-dark-lighter/50 border border-text-primary/20 rounded-lg text-text-primary focus:border-primary/50 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Last Updated */}
+              <div>
+                <p className="text-sm text-text-primary/60">
+                  Last updated: {new Date(aboutData.lastUpdated).toLocaleString()}
+                </p>
               </div>
             </div>
           </div>

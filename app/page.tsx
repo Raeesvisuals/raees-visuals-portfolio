@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
+// Shop component removed from home page
 import Hero from "@/components/Hero";
 import ServicesSection from "@/components/ServicesSection";
 import IntroVideoModal from "@/components/IntroVideoModal";
 import Portfolio from "@/components/Portfolio";
-import Shop from "@/components/Shop";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import AboutSection from "@/components/AboutSection";
 import ContactForm from "@/components/ContactForm";
@@ -18,7 +18,6 @@ export default function Home() {
       <ServicesSection />
       <IntroVideoModal />
       <Portfolio isHomepage={true} />
-      <Shop isHomepage={true} />
       <TestimonialsSection />
       <AboutSection />
       <ContactForm />

@@ -295,6 +295,20 @@ export const LaserFlow = ({
   const emaDtRef = useRef(16.7);
   const pausedRef = useRef(false);
   const inViewRef = useRef(true);
+  const isMobileRef = useRef(false);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = window.innerWidth < 768 || 
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        ('ontouchstart' in window);
+      isMobileRef.current = isMobileDevice;
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const hexToRGB = (hex: string) => {
     let c = hex.trim();
@@ -324,7 +338,10 @@ export const LaserFlow = ({
     });
     rendererRef.current = renderer;
 
-    baseDprRef.current = Math.min(dpr ?? (window.devicePixelRatio || 1), 2);
+    // Optimize for mobile devices
+    const isMobile = isMobileRef.current;
+    const maxDpr = isMobile ? 1.5 : 2;
+    baseDprRef.current = Math.min(dpr ?? (window.devicePixelRatio || 1), maxDpr);
     currentDprRef.current = baseDprRef.current;
 
     renderer.setPixelRatio(currentDprRef.current);
@@ -343,12 +360,15 @@ export const LaserFlow = ({
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3));
 
+    // Reduce effect intensity on mobile
+    const effectMultiplier = isMobile ? 0.6 : 1;
+    
     const uniforms = {
       iTime: { value: 0 },
       iResolution: { value: new THREE.Vector3(1, 1, 1) },
       iMouse: { value: new THREE.Vector4(0, 0, 0, 0) },
-      uWispDensity: { value: wispDensity },
-      uTiltScale: { value: mouseTiltStrength },
+      uWispDensity: { value: wispDensity * effectMultiplier },
+      uTiltScale: { value: mouseTiltStrength * (isMobile ? 0.5 : 1) },
       uFlowTime: { value: 0 },
       uFogTime: { value: 0 },
       uBeamXFrac: { value: horizontalBeamOffset },
@@ -356,10 +376,10 @@ export const LaserFlow = ({
       uFlowSpeed: { value: flowSpeed },
       uVLenFactor: { value: verticalSizing },
       uHLenFactor: { value: horizontalSizing },
-      uFogIntensity: { value: fogIntensity },
+      uFogIntensity: { value: fogIntensity * effectMultiplier },
       uFogScale: { value: fogScale },
       uWSpeed: { value: wispSpeed },
-      uWIntensity: { value: wispIntensity },
+      uWIntensity: { value: wispIntensity * effectMultiplier },
       uFlowStrength: { value: flowStrength },
       uDecay: { value: decay },
       uFalloffStart: { value: falloffStart },
@@ -486,9 +506,19 @@ export const LaserFlow = ({
       lastFpsCheckRef.current = now;
     };
 
-    const animate = () => {
+    // Frame rate limiting for mobile
+    let lastFrameTime = 0;
+    const targetFps = isMobile ? 30 : 60;
+    const frameInterval = 1000 / targetFps;
+
+    const animate = (currentTime: number = performance.now()) => {
       raf = requestAnimationFrame(animate);
+      
       if (pausedRef.current || !inViewRef.current) return;
+
+      // Frame rate limiting
+      if (currentTime - lastFrameTime < frameInterval) return;
+      lastFrameTime = currentTime;
 
       const t = clock.getElapsedTime();
       const dt = Math.max(0, t - prevTime);
@@ -519,7 +549,7 @@ export const LaserFlow = ({
 
       renderer.render(scene, camera);
 
-      adjustDprIfNeeded(performance.now());
+      adjustDprIfNeeded(currentTime);
     };
 
     animate();

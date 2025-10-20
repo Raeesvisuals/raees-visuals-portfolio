@@ -55,6 +55,7 @@ const Hero: React.FC = () => {
   const revealImgRef = useRef<HTMLImageElement>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [windowSize, setWindowSize] = useState({ width: 1920, height: 1080 });
+  const [isMobile, setIsMobile] = useState(false);
   
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -64,16 +65,37 @@ const Hero: React.FC = () => {
   const parallaxY = useSpring(mouseY, springConfig);
 
   useEffect(() => {
-    // Set window size on client side only
+    // Set window size and detect mobile on client side only
+    const checkMobile = () => {
+      const isMobileDevice = window.innerWidth < 768 || 
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        ('ontouchstart' in window);
+      setIsMobile(isMobileDevice);
+    };
+
     setWindowSize({
       width: window.innerWidth,
       height: window.innerHeight,
     });
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   useEffect(() => {
+    // Skip mouse tracking on mobile for performance
+    if (isMobile) return;
+
+    let lastMouseTime = 0;
     const handleMouseMove = (e: MouseEvent) => {
       if (!containerRef.current) return;
+      
+      // Throttle mouse events for performance
+      const now = performance.now();
+      if (now - lastMouseTime < 16) return; // 60fps max
+      lastMouseTime = now;
       
       const rect = containerRef.current.getBoundingClientRect();
       const x = (e.clientX - rect.left - rect.width / 2) / rect.width;
@@ -103,7 +125,7 @@ const Hero: React.FC = () => {
         containerRef.current.removeEventListener("mouseleave", handleMouseLeave);
       }
     };
-  }, [mouseX, mouseY]);
+  }, [mouseX, mouseY, isMobile]);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -145,10 +167,13 @@ const Hero: React.FC = () => {
       <LaserFlow
         className="absolute inset-0"
         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-        dpr={1}
+        dpr={isMobile ? 0.8 : 1}
         horizontalBeamOffset={0.1}
         verticalBeamOffset={0.0}
         color="#FF79C6"
+        wispDensity={isMobile ? 0.5 : 1}
+        fogIntensity={isMobile ? 0.3 : 0.45}
+        wispIntensity={isMobile ? 3 : 5}
       />
       
       {/* Content Container */}
@@ -171,7 +196,7 @@ const Hero: React.FC = () => {
         zIndex: 6
       }}>
         <motion.div
-          style={{ x: parallaxX, y: parallaxY }}
+          style={{ x: isMobile ? 0 : parallaxX, y: isMobile ? 0 : parallaxY }}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2 }}

@@ -16,22 +16,55 @@ const CursorTrail: React.FC = () => {
   const mouseRef = useRef({ x: 0, y: 0 });
   const animationFrameRef = useRef<number>();
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [inView, setInView] = useState(false);
 
   useEffect(() => {
     // Check for reduced motion preference
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
 
+    // Detect mobile device
+    const checkMobile = () => {
+      const isMobileDevice = window.innerWidth < 768 || 
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        ('ontouchstart' in window);
+      setIsMobile(isMobileDevice);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
 
     mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  // Intersection Observer for viewport visibility
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setInView(entries[0]?.isIntersecting ?? false);
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(canvas);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
-    if (prefersReducedMotion) return;
+    if (prefersReducedMotion || isMobile) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -47,27 +80,43 @@ const CursorTrail: React.FC = () => {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    // Mouse move handler
+    // Mouse move handler with throttling for performance
+    let lastMouseTime = 0;
     const handleMouseMove = (e: MouseEvent) => {
+      const now = performance.now();
+      // Throttle mouse events to 60fps max
+      if (now - lastMouseTime < 16) return;
+      lastMouseTime = now;
+
       mouseRef.current = { x: e.clientX, y: e.clientY };
 
-      // Add new particles (limit to 120)
-      if (particlesRef.current.length < 120) {
-        // Create multiple particles per frame for smoother trail
-        for (let i = 0; i < 3; i++) {
+      // Reduce particle count on mobile/low-end devices
+      const maxParticles = isMobile ? 30 : 120;
+      const particlesPerFrame = isMobile ? 1 : 3;
+
+      if (particlesRef.current.length < maxParticles) {
+        for (let i = 0; i < particlesPerFrame; i++) {
           particlesRef.current.push({
             x: e.clientX + (Math.random() - 0.5) * 10,
             y: e.clientY + (Math.random() - 0.5) * 10,
             lifetime: 0,
-            maxLifetime: 60,
+            maxLifetime: isMobile ? 30 : 60,
             hue: (Date.now() / 10) % 360, // Rainbow effect
           });
         }
       }
     };
 
-    // Animation loop
-    const animate = () => {
+    // Animation loop with performance optimizations
+    let lastFrameTime = 0;
+    const animate = (currentTime: number) => {
+      // Skip frame if not in view or if frame rate too high
+      if (!inView || currentTime - lastFrameTime < 16) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+        return;
+      }
+      lastFrameTime = currentTime;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Update and draw particles
@@ -81,7 +130,7 @@ const CursorTrail: React.FC = () => {
         // Calculate opacity based on lifetime
         const progress = particle.lifetime / particle.maxLifetime;
         const opacity = 1 - progress;
-        const size = 4 * (1 - progress);
+        const size = (isMobile ? 2 : 4) * (1 - progress);
 
         // Draw particle with rainbow color
         ctx.beginPath();
@@ -89,9 +138,11 @@ const CursorTrail: React.FC = () => {
         ctx.fillStyle = `hsla(${particle.hue}, 100%, 70%, ${opacity * 0.6})`;
         ctx.fill();
 
-        // Add glow effect
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = `hsla(${particle.hue}, 100%, 70%, ${opacity * 0.4})`;
+        // Add glow effect (reduced on mobile)
+        if (!isMobile) {
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = `hsla(${particle.hue}, 100%, 70%, ${opacity * 0.4})`;
+        }
 
         return true;
       });
@@ -99,8 +150,8 @@ const CursorTrail: React.FC = () => {
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    animate();
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    animationFrameRef.current = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
@@ -109,9 +160,10 @@ const CursorTrail: React.FC = () => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, isMobile, inView]);
 
-  if (prefersReducedMotion) return null;
+  // Don't render on mobile or if reduced motion is preferred
+  if (prefersReducedMotion || isMobile) return null;
 
   return (
     <canvas
