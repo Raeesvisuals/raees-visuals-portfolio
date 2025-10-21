@@ -38,10 +38,8 @@ module.exports = {
     'react/jsx-no-script-url': 'error',
     'react/jsx-no-target-blank': 'error',
     // Additional security rules
-    'no-unused-vars': 'error',
-    'no-undef': 'error',
-    'no-global-assign': 'error',
-    'no-implicit-globals': 'error'
+    'prefer-const': 'error',
+    'no-var': 'error'
   },
   env: {
     browser: true,

@@ -15,7 +15,7 @@ const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 // In-memory store for login attempts (in production, use Redis)
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
 
-export async function authenticate(username: string, password: string, request: any): Promise<{ success: boolean; error?: string }> {
+export async function authenticate(username: string, password: string, request: any): Promise<{ success: boolean; error?: string; sessionToken?: string }> {
   const clientIP = request?.ip || request?.headers?.get('x-forwarded-for') || 'unknown';
   
   // Check for brute force attempts

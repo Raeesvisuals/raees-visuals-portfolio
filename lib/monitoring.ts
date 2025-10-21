@@ -48,10 +48,10 @@ export class SecurityMonitor {
       message,
       details,
       ip: request?.ip || request?.headers.get('x-forwarded-for') || 'unknown',
-      userAgent: request?.headers.get('user-agent'),
+      userAgent: request?.headers.get('user-agent') || undefined,
       url: request?.url,
       userId,
-      sessionId: request?.cookies.get('admin_session')?.value
+      sessionId: request?.cookies.get('admin_session')?.value || undefined
     };
 
     this.logs.push(logEntry);
