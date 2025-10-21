@@ -1,37 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-
-const ADMIN_USERNAME = 'its_raees';
-const ADMIN_PASSWORD = 'Morih@srat41471';
+import { authenticate, createSession } from '@/lib/auth';
+import { validateInput, loginSchema } from '@/lib/validation';
+import { loginRateLimit } from '@/lib/rate-limit';
+import { bruteForceProtection } from '@/lib/rate-limit';
+import { logSecurityEvent } from '@/lib/security';
 
 export async function POST(request: NextRequest) {
-  try {
-    const { username, password } = await request.json();
+  // Apply rate limiting
+  const rateLimitResult = loginRateLimit(request);
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { success: false, error: 'Too many login attempts. Please try again later.' },
+      { status: 429 }
+    );
+  }
 
-    if (!username || !password) {
-      return NextResponse.json({ success: false, error: 'Username and password are required' });
+  try {
+    const body = await request.json();
+    
+    // Validate input
+    const validation = validateInput(loginSchema, body);
+    if (!validation.success) {
+      logSecurityEvent('INVALID_LOGIN_INPUT', { errors: validation.errors }, request);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid input data',
+        details: validation.errors 
+      }, { status: 400 });
     }
 
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      // Create session
-      const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      
-      // Set session cookie
-      const cookieStore = await cookies();
-      cookieStore.set('admin_session', sessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24, // 24 hours
-        path: '/'
-      });
+    const { username, password } = validation.data!;
+    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    
+    // Check brute force protection
+    if (bruteForceProtection.isBlocked(clientIP)) {
+      const lockoutTime = bruteForceProtection.getLockoutTime(clientIP);
+      logSecurityEvent('BRUTE_FORCE_BLOCKED', { clientIP, lockoutTime }, request);
+      return NextResponse.json({
+        success: false,
+        error: `Account temporarily locked. Try again in ${Math.ceil((lockoutTime || 0) / 60000)} minutes.`
+      }, { status: 429 });
+    }
 
+    // Authenticate user
+    const authResult = await authenticate(username, password, request);
+    
+    if (authResult.success) {
+      // Create secure session
+      await createSession(authResult.sessionToken!);
+      
+      // Record successful attempt
+      bruteForceProtection.recordAttempt(clientIP, true);
+      
       return NextResponse.json({ success: true });
     } else {
-      return NextResponse.json({ success: false, error: 'Invalid username or password' });
+      // Record failed attempt
+      bruteForceProtection.recordAttempt(clientIP, false);
+      
+      const remainingAttempts = bruteForceProtection.getRemainingAttempts(clientIP);
+      
+      return NextResponse.json({
+        success: false,
+        error: authResult.error,
+        remainingAttempts
+      }, { status: 401 });
     }
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ success: false, error: 'Login failed' });
+    logSecurityEvent('LOGIN_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' }, request);
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Login failed. Please try again.' 
+    }, { status: 500 });
   }
 }
