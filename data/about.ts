@@ -50,7 +50,7 @@ export const defaultAboutContent: AboutContent = {
   profileTitle: 'Video Editor & Motion Graphics Designer',
   profileHandle: 'raeesvisuals',
   profileStatus: 'Available for Projects',
-  profileAvatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
+  profileAvatarUrl: '/raees-profile.jpg',
   software: [
     { id: '1', name: "Adobe Premiere Pro", category: "Video Editing" },
     { id: '2', name: "Adobe After Effects", category: "Motion Graphics" },
