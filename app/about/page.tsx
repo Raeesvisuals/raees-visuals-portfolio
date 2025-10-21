@@ -19,10 +19,8 @@ export default function About() {
   const aboutData = getAboutContent();
 
   const handleContactClick = () => {
-    const contactSection = document.getElementById('contact');
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    // Open Instagram profile
+    window.open('https://instagram.com/raeesvisuals', '_blank');
   };
 
   const handleImageSelect = (file: any) => {
