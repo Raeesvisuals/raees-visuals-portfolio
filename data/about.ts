@@ -50,7 +50,7 @@ export const defaultAboutContent: AboutContent = {
   profileTitle: 'Video Editor & Motion Graphics Designer',
   profileHandle: 'raeesvisuals',
   profileStatus: 'Available for Projects',
-  profileAvatarUrl: '/raees-profile.jpg',
+  profileAvatarUrl: '/raees-profile.png',
   software: [
     { id: '1', name: "Adobe Premiere Pro", category: "Video Editing" },
     { id: '2', name: "Adobe After Effects", category: "Motion Graphics" },
