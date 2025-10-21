@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_USERNAME = 'its_raees';
+const ADMIN_PASSWORD = 'Morih@srat41471';
 
 export async function POST(request: NextRequest) {
   try {
-    const { password } = await request.json();
+    const { username, password } = await request.json();
 
-    if (!password) {
-      return NextResponse.json({ success: false, error: 'Password is required' });
+    if (!username || !password) {
+      return NextResponse.json({ success: false, error: 'Username and password are required' });
     }
 
-    if (password === ADMIN_PASSWORD) {
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       // Create session
       const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
       
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ success: true });
     } else {
-      return NextResponse.json({ success: false, error: 'Invalid password' });
+      return NextResponse.json({ success: false, error: 'Invalid username or password' });
     }
   } catch (error) {
     console.error('Login error:', error);

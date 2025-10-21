@@ -4,13 +4,13 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Check if the path starts with /admin (but not /admin/login)
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+  // Check if the path starts with /secure-admin (but not /secure-admin/login)
+  if (pathname.startsWith('/secure-admin') && pathname !== '/secure-admin/login') {
     const session = request.cookies.get('admin_session');
     
     // If no session cookie, redirect to login
     if (!session) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      return NextResponse.redirect(new URL('/secure-admin/login', request.url));
     }
   }
   
@@ -19,6 +19,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/admin/:path*',
+    '/secure-admin/:path*',
   ],
 };

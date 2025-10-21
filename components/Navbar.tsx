@@ -50,18 +50,6 @@ const Navbar: React.FC = () => {
               colors={[1, 2, 3, 1, 2, 3, 1, 4]}
             />
             
-            {/* Admin Link - only show if not on admin page */}
-            {!isAdminPage && (
-              <Link href="/admin">
-                <motion.button
-                  className="px-4 py-2 text-text-primary/70 hover:text-primary transition-colors text-sm border border-text-primary/20 rounded-lg hover:border-primary/50"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Admin
-                </motion.button>
-              </Link>
-            )}
             
             {/* Get In Touch Button */}
             <Magnet

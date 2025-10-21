@@ -4,16 +4,13 @@ import React, { useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Image from 'next/image';
 import ProfileCard from './ProfileCard';
-import MediaLibrary from './MediaLibrary';
 import LiquidEther from './LiquidEther';
-import { FaEdit, FaPalette, FaMusic, FaVideo, FaMagic, FaCogs, FaImage } from 'react-icons/fa';
+import { FaEdit, FaPalette, FaMusic, FaVideo, FaMagic, FaCogs } from 'react-icons/fa';
 import { getAboutContent } from '@/data/about';
 
 const AboutSection: React.FC = () => {
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
-  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const aboutData = getAboutContent();
 
@@ -22,10 +19,6 @@ const AboutSection: React.FC = () => {
     window.open('https://instagram.com/raeesvisuals', '_blank');
   };
 
-  const handleImageSelect = (file: any) => {
-    setSelectedImage(file.url);
-    setShowMediaLibrary(false);
-  };
 
   // Icon mapping for services
   const iconMap = {
@@ -70,21 +63,13 @@ const AboutSection: React.FC = () => {
                 handle={aboutData.profileHandle}
                 status={aboutData.profileStatus}
                 contactText="Contact"
-                avatarUrl={selectedImage || aboutData.profileAvatarUrl}
+                avatarUrl={aboutData.profileAvatarUrl}
                 showUserInfo={true}
                 enableTilt={true}
                 enableMobileTilt={false}
                 onContactClick={handleContactClick}
               />
               
-              {/* Change Image Button */}
-              <button
-                onClick={() => setShowMediaLibrary(true)}
-                className="absolute top-4 right-4 bg-primary/20 backdrop-blur-md border border-primary/30 rounded-full p-3 hover:bg-primary/30 transition-colors"
-                title="Change Profile Image"
-              >
-                <FaImage className="text-primary" />
-              </button>
             </div>
           </motion.div>
 
@@ -182,30 +167,6 @@ const AboutSection: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Media Library Modal */}
-      {showMediaLibrary && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-dark-lighter/90 backdrop-blur-md border border-text-primary/20 rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-text-primary">Select Profile Image</h3>
-                <button
-                  onClick={() => setShowMediaLibrary(false)}
-                  className="text-text-primary/60 hover:text-text-primary transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-              
-              <MediaLibrary 
-                onSelectFile={handleImageSelect}
-                showUpload={true}
-                title="Choose an Image"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 };

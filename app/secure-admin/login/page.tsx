@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function AdminLogin() {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -23,7 +24,7 @@ export default function AdminLogin() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
@@ -59,6 +60,20 @@ export default function AdminLogin() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-text-primary/80 text-sm font-medium mb-2">
+                Username
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-3 bg-dark/50 border border-text-primary/20 rounded-lg text-text-primary focus:border-primary focus:outline-none transition-colors"
+                placeholder="Enter username"
+                required
+              />
+            </div>
+
             <div>
               <label className="block text-text-primary/80 text-sm font-medium mb-2">
                 Password
