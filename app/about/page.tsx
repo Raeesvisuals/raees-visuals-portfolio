@@ -1,17 +1,20 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Image from 'next/image';
 import LiquidEther from '@/components/LiquidEther';
 import ProfileCard from '@/components/ProfileCard';
-import { FaEdit, FaPalette, FaVideo, FaMagic, FaCogs } from 'react-icons/fa';
+import MediaLibrary from '@/components/MediaLibrary';
+import { FaEdit, FaPalette, FaVideo, FaMagic, FaCogs, FaImage } from 'react-icons/fa';
 import { getAboutContent } from '@/data/about';
 
 // Updated to use dynamic content from admin panel
 export default function About() {
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const aboutData = getAboutContent();
 
@@ -20,6 +23,11 @@ export default function About() {
     if (contactSection) {
       contactSection.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleImageSelect = (file: any) => {
+    setSelectedImage(file.url);
+    setShowMediaLibrary(false);
   };
 
   // Icon mapping for services
@@ -59,18 +67,29 @@ export default function About() {
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.8 }}
           >
-            <ProfileCard
-              name={aboutData.profileName}
-              title={aboutData.profileTitle}
-              handle={aboutData.profileHandle}
-              status={aboutData.profileStatus}
-              contactText="Contact"
-              avatarUrl={aboutData.profileAvatarUrl}
-              showUserInfo={true}
-              enableTilt={true}
-              enableMobileTilt={false}
-              onContactClick={handleContactClick}
-            />
+            <div className="relative">
+              <ProfileCard
+                name={aboutData.profileName}
+                title={aboutData.profileTitle}
+                handle={aboutData.profileHandle}
+                status={aboutData.profileStatus}
+                contactText="Contact"
+                avatarUrl={selectedImage || aboutData.profileAvatarUrl}
+                showUserInfo={true}
+                enableTilt={true}
+                enableMobileTilt={false}
+                onContactClick={handleContactClick}
+              />
+              
+              {/* Change Image Button */}
+              <button
+                onClick={() => setShowMediaLibrary(true)}
+                className="absolute top-4 right-4 bg-primary/20 backdrop-blur-md border border-primary/30 rounded-full p-3 hover:bg-primary/30 transition-colors"
+                title="Change Profile Image"
+              >
+                <FaImage className="text-primary" />
+              </button>
+            </div>
           </motion.div>
 
           {/* Right: About Content */}
@@ -167,6 +186,31 @@ export default function About() {
         </motion.div>
       </div>
       </section>
+
+      {/* Media Library Modal */}
+      {showMediaLibrary && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-dark-lighter/90 backdrop-blur-md border border-text-primary/20 rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-text-primary">Select Profile Image</h3>
+                <button
+                  onClick={() => setShowMediaLibrary(false)}
+                  className="text-text-primary/60 hover:text-text-primary transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <MediaLibrary 
+                onSelectFile={handleImageSelect}
+                showUpload={true}
+                title="Choose an Image"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
