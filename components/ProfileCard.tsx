@@ -1,7 +1,4 @@
-"use client";
-
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
-import Image from 'next/image';
 import './ProfileCard.css';
 
 const DEFAULT_BEHIND_GRADIENT =
@@ -279,28 +276,24 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
           <div className="pc-shine" />
           <div className="pc-glare" />
           <div className="pc-content pc-avatar-content">
-            <div className="avatar-wrapper">
-              <Image
-                className="avatar"
-                src={avatarUrl}
-                alt={`${name || 'User'} avatar`}
-                width={120}
-                height={120}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                }}
-              />
-            </div>
+            <img
+              className="avatar"
+              src={avatarUrl}
+              alt={`${name || 'User'} avatar`}
+              loading="lazy"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
+            />
             {showUserInfo && (
               <div className="pc-user-info">
                 <div className="pc-user-details">
                   <div className="pc-mini-avatar">
-                    <Image
+                    <img
                       src={miniAvatarUrl || avatarUrl}
                       alt={`${name || 'User'} mini avatar`}
-                      width={32}
-                      height={32}
+                      loading="lazy"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.opacity = '0.5';
