@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaSave, FaEye, FaArrowLeft } from 'react-icons/fa';
+import { FaSave, FaEye, FaArrowLeft, FaImage, FaVideo, FaYoutube } from 'react-icons/fa';
 import Link from 'next/link';
 import FileUpload from '@/components/FileUpload';
+import VideoThumbnailSelector from '@/components/VideoThumbnailSelector';
 
 export default function NewPortfolioItem() {
   const [formData, setFormData] = useState({
@@ -19,6 +20,9 @@ export default function NewPortfolioItem() {
   });
 
   const [uploadedVideo, setUploadedVideo] = useState<string>('');
+  const [showThumbnailSelector, setShowThumbnailSelector] = useState(false);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<string>('');
+  const [youtubeUrl, setYoutubeUrl] = useState<string>('');
 
   const categories = ['Fitness', 'SaaS', 'Explainer', 'Commercial', 'Documentary', 'Animation'];
   const types = ['Short Form', 'Long Form', 'Animation'];
@@ -37,16 +41,45 @@ export default function NewPortfolioItem() {
     }));
   };
 
-  const handleVideoUpload = (files: File[]) => {
-    // In real implementation, you would upload the video file to your server
+  const handleVideoUpload = async (files: File[]) => {
     if (files.length > 0) {
-      const videoUrl = `/uploads/portfolio/${Date.now()}_${files[0].name}`;
-      setUploadedVideo(videoUrl);
-      setFormData(prev => ({
-        ...prev,
-        video: videoUrl
-      }));
+      const formData = new FormData();
+      formData.append('file', files[0]);
+
+      try {
+        const response = await fetch('/api/upload-video', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          setUploadedVideo(data.file.url);
+          setFormData(prev => ({
+            ...prev,
+            video: data.file.url
+          }));
+        } else {
+          alert('Video upload failed: ' + data.error);
+        }
+      } catch (error) {
+        console.error('Video upload error:', error);
+        alert('Video upload failed');
+      }
     }
+  };
+
+  const handleThumbnailSelect = (thumbnailUrl: string, thumbnailType: 'video' | 'youtube' | 'upload') => {
+    setSelectedThumbnail(thumbnailUrl);
+    setFormData(prev => ({
+      ...prev,
+      thumbnail: thumbnailUrl
+    }));
+    setShowThumbnailSelector(false);
+  };
+
+  const openThumbnailSelector = () => {
+    setShowThumbnailSelector(true);
   };
 
   return (
@@ -129,20 +162,37 @@ export default function NewPortfolioItem() {
             </div>
 
             {formData.isYouTube ? (
-              <div>
-                <label className="block text-text-primary font-medium mb-2">YouTube Video ID *</label>
-                <input
-                  type="text"
-                  name="youtubeId"
-                  value={formData.youtubeId}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-dark border border-text-primary/20 rounded-lg text-text-primary focus:border-primary focus:outline-none transition-colors"
-                  placeholder="e.g., dQw4w9WgXcQ (from youtube.com/watch?v=dQw4w9WgXcQ)"
-                  required={formData.isYouTube}
-                />
-                <p className="text-text-primary/50 text-sm mt-2">
-                  Just the video ID part, not the full URL. The thumbnail will be auto-generated.
-                </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-text-primary font-medium mb-2">YouTube URL *</label>
+                  <input
+                    type="url"
+                    name="youtubeUrl"
+                    value={youtubeUrl}
+                    onChange={(e) => setYoutubeUrl(e.target.value)}
+                    className="w-full px-4 py-3 bg-dark border border-text-primary/20 rounded-lg text-text-primary focus:border-primary focus:outline-none transition-colors"
+                    placeholder="https://youtube.com/watch?v=..."
+                    required={formData.isYouTube}
+                  />
+                    <p className="text-text-primary/50 text-sm mt-2">
+                      Paste the full YouTube URL. We&apos;ll extract the video ID and thumbnails automatically.
+                    </p>
+                </div>
+
+                {youtubeUrl && (
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={openThumbnailSelector}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors"
+                    >
+                      <FaImage />
+                      Select Thumbnail
+                    </button>
+                    <span className="text-text-primary/60 text-sm">
+                      Choose from auto-generated thumbnails
+                    </span>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-6">
@@ -158,6 +208,21 @@ export default function NewPortfolioItem() {
                     uploadedFiles={uploadedVideo ? [uploadedVideo] : []}
                     fileType="video"
                   />
+                  
+                  {uploadedVideo && (
+                    <div className="mt-4 flex items-center gap-4">
+                      <button
+                        onClick={openThumbnailSelector}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors"
+                      >
+                        <FaVideo />
+                        Select Frame as Thumbnail
+                      </button>
+                      <span className="text-text-primary/60 text-sm">
+                        Choose a frame from your video
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* OR Video URL */}
@@ -187,19 +252,72 @@ export default function NewPortfolioItem() {
               </div>
             )}
 
-            {!formData.isYouTube && (
-              <div className="mt-6">
-                <label className="block text-text-primary font-medium mb-2">Thumbnail URL</label>
-                <input
-                  type="url"
-                  name="thumbnail"
-                  value={formData.thumbnail}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-dark border border-text-primary/20 rounded-lg text-text-primary focus:border-primary focus:outline-none transition-colors"
-                  placeholder="https://example.com/thumbnail.jpg"
-                />
-              </div>
-            )}
+            {/* Thumbnail Preview and Manual Upload */}
+            <div className="mt-6">
+              <label className="block text-text-primary font-medium mb-2">Thumbnail</label>
+              
+              {selectedThumbnail ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={selectedThumbnail}
+                      alt="Selected thumbnail"
+                      className="w-32 h-20 object-cover rounded-lg border border-text-primary/20"
+                    />
+                    <div>
+                      <p className="text-text-primary/80 text-sm">Selected thumbnail</p>
+                      <button
+                        onClick={() => {
+                          setSelectedThumbnail('');
+                          setFormData(prev => ({ ...prev, thumbnail: '' }));
+                        }}
+                        className="text-red-400 hover:text-red-300 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={openThumbnailSelector}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors"
+                    >
+                      <FaImage />
+                      Choose Thumbnail
+                    </button>
+                    <span className="text-text-primary/60 text-sm">
+                      {formData.isYouTube ? 'Select from YouTube thumbnails' : 'Select from video frame or upload custom'}
+                    </span>
+                  </div>
+                  
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-text-primary/20"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-dark text-text-primary/50">OR</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-text-primary/80 text-sm font-medium mb-2">
+                      Manual Thumbnail URL
+                    </label>
+                    <input
+                      type="url"
+                      name="thumbnail"
+                      value={formData.thumbnail}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 bg-dark border border-text-primary/20 rounded-lg text-text-primary focus:border-primary focus:outline-none transition-colors"
+                      placeholder="https://example.com/thumbnail.jpg"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Preview */}
@@ -257,6 +375,16 @@ export default function NewPortfolioItem() {
           </div>
         </form>
       </div>
+
+      {/* Video Thumbnail Selector Modal */}
+      {showThumbnailSelector && (
+        <VideoThumbnailSelector
+          onThumbnailSelect={handleThumbnailSelect}
+          onClose={() => setShowThumbnailSelector(false)}
+          videoUrl={uploadedVideo}
+          youtubeUrl={youtubeUrl}
+        />
+      )}
     </div>
   );
 }
