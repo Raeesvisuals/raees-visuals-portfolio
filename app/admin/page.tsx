@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { FaBlog, FaVideo, FaShoppingCart, FaPlus, FaEdit, FaTrash, FaEye, FaUser, FaSave } from 'react-icons/fa';
 import Link from 'next/link';
 import { getAboutContent, updateAboutContent, AboutContent } from '@/data/about';
+import { useRouter } from 'next/navigation';
 
 // Mock data - in real implementation, this would come from your backend/API
 const mockBlogPosts = [
@@ -28,6 +29,29 @@ const mockShopItems = [
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState<'blog' | 'portfolio' | 'shop' | 'about'>('blog');
   const [aboutData, setAboutData] = useState<AboutContent>(getAboutContent());
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/verify');
+        const data = await response.json();
+        setIsAuthenticated(data.authenticated);
+        if (!data.authenticated) {
+          router.push('/admin/login');
+        }
+      } catch (error) {
+        router.push('/admin/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   const tabs = [
     { id: 'blog' as const, label: 'Blog Posts', icon: FaBlog, count: mockBlogPosts.length },
@@ -373,6 +397,21 @@ export default function AdminPanel() {
         return null;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-text-primary/60">Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Will redirect to login
+  }
 
   return (
     <div className="min-h-screen bg-dark">
