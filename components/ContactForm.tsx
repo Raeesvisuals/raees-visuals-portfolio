@@ -128,10 +128,10 @@ const ContactForm: React.FC = () => {
         transition={{ duration: 10, repeat: Infinity }}
       />
 
-      <div className="relative z-10 max-w-4xl mx-auto">
+      <div className="relative z-10 max-w-3xl mx-auto">
         {/* Header */}
         <motion.div
-          className="text-center mb-12"
+          className="text-center mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
@@ -146,7 +146,7 @@ const ContactForm: React.FC = () => {
 
         {/* Form */}
         <motion.div
-          className="bg-dark-lighter/30 backdrop-blur-md border border-primary/20 rounded-3xl p-8 md:p-12"
+          className="bg-dark-lighter/30 backdrop-blur-md border border-primary/20 rounded-3xl p-6 md:p-8"
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8, delay: 0.2 }}
