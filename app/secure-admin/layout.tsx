@@ -26,7 +26,7 @@ export default function AdminLayout({
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/admin/login');
+      router.push('/secure-admin/login');
       router.refresh();
     } catch (error) {
       console.error('Logout error:', error);
@@ -34,12 +34,12 @@ export default function AdminLayout({
   };
 
   const adminMenuItems = [
-    { href: '/admin', label: 'Dashboard', icon: FaHome },
-    { href: '/admin/portfolio/new', label: 'New Portfolio', icon: FaVideo },
-    { href: '/admin/media', label: 'Media Library', icon: FaImage },
-    { href: '/admin/profile', label: 'Profile Settings', icon: FaUser },
-    { href: '/admin/blog/new', label: 'New Blog Post', icon: FaBlog },
-    { href: '/admin/shop/new', label: 'New Product', icon: FaShoppingBag },
+    { href: '/secure-admin', label: 'Dashboard', icon: FaHome },
+    { href: '/secure-admin/portfolio/new', label: 'New Portfolio', icon: FaVideo },
+    { href: '/secure-admin/media', label: 'Media Library', icon: FaImage },
+    { href: '/secure-admin/profile', label: 'Profile Settings', icon: FaUser },
+    { href: '/secure-admin/blog/new', label: 'New Blog Post', icon: FaBlog },
+    { href: '/secure-admin/shop/new', label: 'New Product', icon: FaShoppingBag },
   ];
 
   return (

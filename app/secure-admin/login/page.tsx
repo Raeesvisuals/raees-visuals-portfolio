@@ -30,7 +30,7 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (data.success) {
-        router.push('/admin');
+        router.push('/secure-admin');
         router.refresh();
       } else {
         setError('Invalid password. Please try again.');
